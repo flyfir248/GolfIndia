@@ -19,7 +19,7 @@ import streamlit as st
 import re  # Add this line
 
 # Load the dataset
-file_path = r'C:\Users\anoop\PycharmProjects\Todeploy\DataShortened\glassdoor_shortened.csv'
+file_path = r'DataShortened\glassdoor_shortened.csv'
 df = pd.read_csv(file_path)
 
 st.divider()  # 👈 Draws a horizontal rule
@@ -243,7 +243,7 @@ st.title("Exploratory Data Analysis of Job Descriptions Dataset")
 st.divider()  # 👈 Another horizontal rule
 
 # Load the dataset
-file_path = r'C:\Users\anoop\PycharmProjects\Todeploy\DataShortened\job_descriptions_shortened.csv'
+file_path = r'DataShortened\job_descriptions_shortened.csv'
 df = pd.read_csv(file_path)
 
 # Convert Job Id to string to prevent scientific notation
@@ -405,7 +405,7 @@ st.divider()  # 👈 Another horizontal rule
 
 @st.cache_data
 def load_data():
-    file_path = r'C:\Users\anoop\PycharmProjects\Todeploy\DataShortened\job_shortened.csv'
+    file_path = r'DataShortened\job_shortened.csv'
     return pd.read_csv(file_path)
 
 df = load_data()
@@ -631,7 +631,7 @@ st.divider()  # 👈 Another horizontal rule
 @st.cache_data
 def load_data():
     return pd.read_csv(
-        r"C:\Users\anoop\PycharmProjects\Todeploy\DataShortened\NYC_Jobs_shortened.csv")
+        r"DataShortened\NYC_Jobs_shortened.csv")
 
 
 df = load_data()
@@ -823,7 +823,7 @@ st.divider()  # Another horizontal rule
 
 @st.cache_data
 def load_data():
-    return pd.read_csv(r"C:\Users\anoop\PycharmProjects\Todeploy\DataShortened\job_posts_shortened.csv")
+    return pd.read_csv(r"DataShortened\job_posts_shortened.csv")
 
 df = load_data()
 

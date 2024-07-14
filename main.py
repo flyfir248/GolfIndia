@@ -20,7 +20,7 @@ import re  # Add this line
 from PIL import Image
 
 # Set up the logo
-logo_path = r'Misc\images\Logo.png'
+logo_path = r'Misc/images/Logo.png'
 logo = Image.open(logo_path)
 
 # Create three columns

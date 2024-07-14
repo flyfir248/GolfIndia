@@ -1,1 +1,1 @@
-streamlit run main.py --server.port 5000
+streamlit run main.py

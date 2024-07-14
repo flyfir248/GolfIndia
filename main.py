@@ -23,12 +23,12 @@ from PIL import Image
 logo_path = r'Misc/images/Logo.png'
 logo = Image.open(logo_path)
 
-# Create three columns
-col1, col2, col3 = st.columns([1,2,1])
+# Create a single column for the logo
+col = st.container()
 
-# Display the logo in the middle column
-with col2:
-    st.image(logo, width=400)  # Increased width for a larger logo
+# Display the logo centered at the top
+with col:
+    st.image(logo, use_column_width=True)
 
 # Load the dataset
 file_path = r'DataShortened/glassdoor_shortened.csv'

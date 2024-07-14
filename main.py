@@ -17,6 +17,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import re  # Add this line
+from PIL import Image
+
+# Set up the logo
+logo_path = r'Misc\images\Logo.png'
+logo = Image.open(logo_path)
+
+# Create three columns
+col1, col2, col3 = st.columns([1,2,1])
+
+# Display the logo in the middle column
+with col2:
+    st.image(logo, width=400)  # Increased width for a larger logo
 
 # Load the dataset
 file_path = r'DataShortened/glassdoor_shortened.csv'

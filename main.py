@@ -13,11 +13,20 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import spacy
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import re  # Add this line
 from PIL import Image
+
+# Ensure Spacy model is downloaded
+try:
+    nlp = spacy.load('en_core_web_sm')
+except OSError:
+    spacy.cli.download("en_core_web_sm")
+    nlp = spacy.load('en_core_web_sm')
 
 # Set up the logo
 logo_path = r'Misc/images/Logo.png'
@@ -132,6 +141,21 @@ ax.imshow(cons_wordcloud, interpolation='bilinear')
 ax.axis('off')
 st.pyplot(fig)
 
+# Popular and Least Popular Jobs
+st.subheader("Most Popular Jobs")
+popular_jobs = df['job_title'].value_counts().head(10)
+fig, ax = plt.subplots()
+sns.barplot(x=popular_jobs.values, y=popular_jobs.index, ax=ax)
+ax.set_title('Top 10 Most Popular Jobs')
+st.pyplot(fig)
+
+st.subheader("Least Popular Jobs")
+least_popular_jobs = df['job_title'].value_counts().tail(10)
+fig, ax = plt.subplots()
+sns.barplot(x=least_popular_jobs.values, y=least_popular_jobs.index, ax=ax)
+ax.set_title('Top 10 Least Popular Jobs')
+st.pyplot(fig)
+
 # Preprocess the data
 df.fillna('', inplace=True)
 
@@ -228,14 +252,59 @@ ax.set_title('ROC Curve')
 ax.legend(loc='lower right')
 st.pyplot(fig)
 
+
 # Insights
 st.subheader("Insights")
-st.write("""
-- Various machine learning models have been trained and evaluated on the dataset.
-- The accuracy, classification report, and confusion matrix for each model have been provided.
+st.markdown("""
+- The dataset provides valuable information about employee experiences on Glassdoor.
+- The most popular job titles can help identify trends in the job market.
+- Machine learning models were trained to predict the overall rating based on various features.
+- The classification report and confusion matrix for each model have been provided.
 - The ROC curves and AUC scores show the performance of the models in distinguishing between the classes.
 - Hyperparameter tuning was performed using GridSearchCV to find the best parameters for each model.
 """)
+
+# Dummy CV section
+st.subheader("Job Matching Based on CV")
+
+dummy_cvs = [
+    "Data Scientist with experience in machine learning, Python, and data analysis.",
+    "Software Engineer skilled in Java, Spring Boot, and Microservices.",
+    "Project Manager with expertise in Agile methodologies and team leadership.",
+    "Marketing Specialist with a focus on digital marketing and social media.",
+    "Sales Executive with a strong background in B2B sales and customer relations."
+]
+
+# Provide an option to select a dummy CV or input a CV
+cv_option = st.selectbox("Select a Dummy CV or Write Your CV", ["Select a Dummy CV"] + dummy_cvs + ["Write Your CV"])
+
+if cv_option == "Write Your CV":
+    user_cv = st.text_area("Enter your CV")
+else:
+    user_cv = cv_option if cv_option != "Select a Dummy CV" else ""
+
+if user_cv:
+    st.subheader("Selected CV")
+    st.write(user_cv)
+
+    # Load the NLP model
+    nlp = spacy.load('en_core_web_sm')
+
+    # Vectorize the CV and the job descriptions
+    vectorizer = TfidfVectorizer()
+    job_descriptions = df['pros'] + ' ' + df['cons'] + ' ' + df['headline']
+    all_texts = [user_cv] + job_descriptions.tolist()
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+
+    # Compute cosine similarity
+    cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+
+    # Get top 5 job matches
+    top_indices = cosine_similarities.argsort()[-5:][::-1]
+    top_matches = df.iloc[top_indices]
+
+    st.subheader("Top Matching Jobs")
+    st.write(top_matches[['headline', 'pros', 'cons', 'overall_rating']])
 
 st.divider()  # 👈 Draws a horizontal rule
 
@@ -331,6 +400,22 @@ st.bar_chart(df['Role'].value_counts())
 st.subheader("Job Portal Distribution")
 st.bar_chart(df['Job Portal'].value_counts())
 
+# Most Popular Jobs
+st.subheader("Most Popular Jobs")
+popular_jobs = df['Job Title'].value_counts().head(10)
+fig, ax = plt.subplots()
+sns.barplot(x=popular_jobs.values, y=popular_jobs.index, ax=ax)
+ax.set_title('Top 10 Most Popular Jobs')
+st.pyplot(fig)
+
+# Least Popular Jobs
+st.subheader("Least Popular Jobs")
+least_popular_jobs = df['Job Title'].value_counts().tail(10)
+fig, ax = plt.subplots()
+sns.barplot(x=least_popular_jobs.values, y=least_popular_jobs.index, ax=ax)
+ax.set_title('Top 10 Least Popular Jobs')
+st.pyplot(fig)
+
 st.title("Job Descriptions Dataset ML Analysis")
 
 # Slider to select number of rows
@@ -408,6 +493,80 @@ for name, model in best_estimators.items():
     ax.set_ylabel('True Positive Rate')
     ax.legend(loc='lower right')
     st.pyplot(fig)
+
+
+def match_cv_to_jobs(cv_text, job_descriptions, top_n=5):
+    # Combine CV and job descriptions
+    all_texts = [cv_text] + job_descriptions
+
+    # Create TF-IDF vectorizer
+    vectorizer = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+
+    # Calculate cosine similarity
+    cv_vector = tfidf_matrix[0]
+    job_vectors = tfidf_matrix[1:]
+    similarities = cosine_similarity(cv_vector, job_vectors)
+
+    # Get top N matches
+    top_indices = similarities[0].argsort()[-top_n:][::-1]
+    top_similarities = similarities[0][top_indices]
+
+    return top_indices, top_similarities
+
+
+# Define dummy CVs
+dummy_cvs = {
+    "Software Engineer": "Experienced software engineer with 5 years of experience in Python, Java, and JavaScript. Strong background in web development and machine learning.",
+    "Data Scientist": "Data scientist with 3 years of experience in statistical analysis, machine learning, and data visualization. Proficient in Python, R, and SQL.",
+    "Marketing Specialist": "Marketing professional with 4 years of experience in digital marketing, content creation, and social media management. Strong analytical and communication skills.",
+    "Project Manager": "Certified project manager with 6 years of experience leading cross-functional teams. Expertise in Agile methodologies and risk management.",
+    "Graphic Designer": "Creative graphic designer with 5 years of experience in branding, UI/UX design, and print media. Proficient in Adobe Creative Suite."
+}
+
+# Add this code after loading the dataset and before the "Dataset Overview" section
+st.header("CV Matching")
+
+cv_option = st.radio("Choose CV input method:", ("Select from dummy CVs", "Input your own CV"))
+
+cv_text = ""  # Initialize cv_text
+
+if cv_option == "Select from dummy CVs":
+    selected_cv = st.selectbox("Select a dummy CV:", list(dummy_cvs.keys()))
+    cv_text = dummy_cvs[selected_cv]
+else:
+    cv_text = st.text_area("Enter your CV text:", height=200)
+
+if cv_text:
+    st.write("CV Text:")
+    st.write(cv_text)
+else:
+    st.warning("Please select a dummy CV or enter your own CV text.")
+
+if st.button("Match CV to Jobs"):
+    if cv_text:
+        job_descriptions = df['Job Description'].tolist()
+        top_indices, top_similarities = match_cv_to_jobs(cv_text, job_descriptions)
+
+        st.subheader("Top 5 Matching Jobs:")
+        for i, (index, similarity) in enumerate(zip(top_indices, top_similarities), 1):
+            st.write(f"{i}. Job Title: {df['Job Title'].iloc[index] if 'Job Title' in df.columns else 'N/A'}")
+            st.write(f"   Similarity Score: {similarity:.2f}")
+
+            if 'Company' in df.columns:
+                st.write(f"   Company: {df['Company'].iloc[index]}")
+
+            if 'Location' in df.columns:
+                st.write(f"   Location: {df['Location'].iloc[index]}")
+            elif 'Work Type' in df.columns:  # Assuming 'Work Type' might be used instead of 'Location'
+                st.write(f"   Work Type: {df['Work Type'].iloc[index]}")
+
+            if 'Salary Range' in df.columns:
+                st.write(f"   Salary Range: {df['Salary Range'].iloc[index]}")
+
+            st.write("---")
+    else:
+        st.warning("Please enter or select a CV before matching.")
 
 
 st.divider()  # 👈 Another horizontal rule
@@ -634,6 +793,48 @@ st.write("""
 
 st.write("Note: This analysis is based on the given dataset and should be interpreted within its context. Always consider potential biases and limitations in the data.")
 
+# Dummy CV section
+st.subheader("Job Matching Based on CV")
+
+dummy_cvs = [
+    "Data Scientist with experience in machine learning, Python, and data analysis.",
+    "Software Engineer skilled in Java, Spring Boot, and Microservices.",
+    "Project Manager with expertise in Agile methodologies and team leadership.",
+    "Marketing Specialist with a focus on digital marketing and social media.",
+    "Sales Executive with a strong background in B2B sales and customer relations."
+]
+
+# Provide an option to select a dummy CV or input a CV
+cv_option = st.selectbox("Select a Dummy CV or Write Your CV", ["Select a Dummy CV"] + dummy_cvs + ["Write Your CV"], key="cv_selection")
+
+if cv_option == "Write Your CV":
+    user_cv = st.text_area("Enter your CV", key="user_cv_input")
+else:
+    user_cv = cv_option if cv_option != "Select a Dummy CV" else ""
+
+if user_cv:
+    st.subheader("Selected CV")
+    st.write(user_cv)
+
+    # Vectorize the CV and the job descriptions
+    vectorizer = TfidfVectorizer()
+    job_descriptions = df['job_title'] + ' ' + df['experience'].astype(str) + ' ' + df['ctc'].astype(str)
+    all_texts = [user_cv] + job_descriptions.tolist()
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+
+    # Compute cosine similarity
+    cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+
+    # Get top 5 job matches
+    top_indices = cosine_similarities.argsort()[-5:][::-1]
+    top_matches = df.iloc[top_indices]
+
+    st.subheader("Top Matching Jobs")
+    st.write(top_matches[['job_title', 'experience', 'ctc', 'location']])
+
+else:
+    st.warning("Please select a dummy CV or enter your own CV to see job matches.")
+
 st.divider()  # 👈 Another horizontal rule
 # Set the title of the app
 st.title("New York City Posts Dataset EDA and ML Analysis")
@@ -825,6 +1026,58 @@ st.write(
 
 st.write(
     "Remember that while these models perform well, they should be used as a tool to assist human decision-making rather than replace it entirely in the context of job classification.")
+
+
+st.header("CV Matching for NYC Jobs")
+
+dummy_cvs_nyc = [
+    "Data Analyst with experience in Python, SQL, and data visualization. Skilled in statistical analysis and machine learning.",
+    "Administrative Assistant with 5 years of experience in office management, scheduling, and customer service.",
+    "Civil Engineer specializing in urban infrastructure projects. Proficient in AutoCAD and project management.",
+    "Public Health Specialist with a focus on community health programs and epidemiology. Experience in data analysis and policy development.",
+    "IT Support Technician with expertise in troubleshooting hardware and software issues. Knowledge of network administration and cybersecurity."
+]
+
+# Provide an option to select a dummy CV or input a CV
+cv_option_nyc = st.selectbox("Select a Dummy CV or Write Your Own",
+                             ["Select a Dummy CV"] + dummy_cvs_nyc + ["Write Your Own CV"],
+                             key="cv_selection_nyc")
+
+if cv_option_nyc == "Write Your Own CV":
+    user_cv_nyc = st.text_area("Enter your CV", key="user_cv_input_nyc")
+else:
+    user_cv_nyc = cv_option_nyc if cv_option_nyc != "Select a Dummy CV" else ""
+
+if user_cv_nyc:
+    st.subheader("Selected CV")
+    st.write(user_cv_nyc)
+
+    # Vectorize the CV and the job descriptions
+    vectorizer = TfidfVectorizer(stop_words='english')
+    job_descriptions = df['Business Title'] + ' ' + df['Job Description'].fillna('') + ' ' + \
+                       df['Minimum Qual Requirements'].fillna('') + ' ' + df['Preferred Skills'].fillna('')
+    all_texts = [user_cv_nyc] + job_descriptions.tolist()
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+
+    # Compute cosine similarity
+    cosine_similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+
+    # Get top 5 job matches
+    top_indices = cosine_similarities.argsort()[-5:][::-1]
+    top_matches = df.iloc[top_indices]
+
+    st.subheader("Top 5 Matching Jobs")
+    for i, (index, row) in enumerate(top_matches.iterrows(), 1):
+        st.write(f"{i}. {row['Business Title']}")
+        st.write(f"   Agency: {row['Agency']}")
+        st.write(f"   Salary Range: ${row['Salary Range From']} - ${row['Salary Range To']}")
+        st.write(f"   Job Category: {row['Job Category']}")
+        st.write(f"   Career Level: {row['Career Level']}")
+        st.write("---")
+
+else:
+    st.warning("Please select a dummy CV or enter your own CV to see job matches.")
+
 
 # Configuring the page
 

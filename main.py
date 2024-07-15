@@ -157,7 +157,7 @@ X = scaler.fit_transform(X)
 
 # Streamlit slider to select the number of rows
 st.sidebar.title("Data Selection")
-num_rows = st.sidebar.slider("Number of rows to use for training", min_value=100, max_value=len(df), value=5000, step=1000)
+num_rows = st.sidebar.slider("Number of rows to use for training", min_value=100, max_value=len(df), value=100, step=1000)
 X = X[:num_rows]
 y = y[:num_rows]
 
@@ -334,7 +334,7 @@ st.bar_chart(df['Job Portal'].value_counts())
 st.title("Job Descriptions Dataset ML Analysis")
 
 # Slider to select number of rows
-row_count = st.slider('Select number of rows to use for analysis (Job Description Dataset)', min_value=100, max_value=len(df), value=1000)
+row_count = st.slider('Select number of rows to use for analysis (Job Description Dataset)', min_value=100, max_value=len(df), value=100)
 
 # Preprocess data
 df_sample = df.sample(n=row_count, random_state=42)
@@ -504,7 +504,7 @@ st.pyplot(fig)
 st.header("Machine Learning Analysis")
 st.subheader("Select Number of Rows for Training")
 
-num_rows = st.slider("Number of rows to use for training", min_value=100, max_value=len(df), value=1000, step=100)
+num_rows = st.slider("Number of rows to use for training", min_value=100, max_value=len(df), value=100, step=100)
 df = df.head(num_rows)
 
 # Prepare data for ML
@@ -926,7 +926,7 @@ st.title("Job Posts Machine Learning Analysis")
 
 # Data slider for ML part
 st.subheader("Select Data for ML Analysis")
-ml_num_rows = st.slider("Select number of rows for ML analysis", min_value=100, max_value=len(df), value=1000, key='ml_analysis')
+ml_num_rows = st.slider("Select number of rows for ML analysis", min_value=100, max_value=len(df), value=100, key='ml_analysis')
 df_ml = df.head(ml_num_rows)
 
 # Data preprocessing

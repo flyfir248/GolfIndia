@@ -157,7 +157,7 @@ X = scaler.fit_transform(X)
 
 # Streamlit slider to select the number of rows
 st.sidebar.title("Data Selection")
-num_rows = st.sidebar.slider("Number of rows to use for training", min_value=1000, max_value=len(df), value=5000, step=1000)
+num_rows = st.sidebar.slider("Number of rows to use for training", min_value=100, max_value=len(df), value=5000, step=1000)
 X = X[:num_rows]
 y = y[:num_rows]
 
@@ -334,7 +334,7 @@ st.bar_chart(df['Job Portal'].value_counts())
 st.title("Job Descriptions Dataset ML Analysis")
 
 # Slider to select number of rows
-row_count = st.slider('Select number of rows to use for analysis (Job Description Dataset)', min_value=1000, max_value=len(df), value=1000)
+row_count = st.slider('Select number of rows to use for analysis (Job Description Dataset)', min_value=100, max_value=len(df), value=1000)
 
 # Preprocess data
 df_sample = df.sample(n=row_count, random_state=42)
